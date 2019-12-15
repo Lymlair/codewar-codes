@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+<script>
+    var theLift = function(queues, capacity) {
+        // 楼层高度
+        const height = queues.length - 1
+
+        // 电梯停靠的层数
+        let list = [0]
+
+        // 电梯移动状态
+        let direction = 'up'
+
+        // 电梯装的人
+        let lift = []
+
+        let topFloor = 0
+        let bottomFloor = 0
+        
+        // 最顶层有没有下过人的标识
+        let topGetOut = false
+        
+        // 最顶层有没有下过人的标识
+        let bottomGetOut = false
+
+        let uptime = 1
+
+        function getInLift(queues, floor) {
+            const peoples = queues[floor]
+            // 如果电梯没超重
+            if (lift.length < capacity) {
+                // 上去的情况
+                if (direction === 'up') {
+                    for (let j = 0; j < queues[floor].length; j++) {
+                        // people[j] -> 某个人想要去的楼层， floor -> 目前楼层
+                        // 并且有人想去跟电梯同个方向的楼层
+                        if (queues[floor][j] > floor && lift.length < capacity) {
+                            // lift推进要进的人
+                            lift.push(queues[floor][j])
+                            queues[floor][j] = '0'
+                        } else {
+                            // break;
+                        }
+                    }
+                    queues[floor] = queues[floor].filter(item => item !== '0')
+                } else if (direction === 'down') {
+                    for (let j = 0; j < queues[floor].length; j++) {
+                        // people[j] -> 某个人想要去的楼层， floor -> 目前楼层
+                        // 并且有人想去跟电梯同个方向的楼层
+                        if (queues[floor][j] < floor && lift.length < capacity) {
+                            lift.push(queues[floor][j])
+                            queues[floor][j] = '0'
+                        } else {
+                            // break;
+                        }
+                    }
+                    queues[floor] = queues[floor].filter(item => item !== '0')
+                }
+            } else {
+                return
+            }
+        }
+
+        function getOutLift(floor) {
+            if (lift.includes(floor)) {
+                const index = lift.indexOf(floor)
+                lift.splice(index, 1)
+                if (lift.includes(floor)) {
+                    getOutLift(floor)
+                } else {
+                    return
+                }
+            }
+        }
+
+
+        function goUp() {
+            // lift start go up
+            for (let i = bottomFloor; i < queues.length; i++) {
+                // 如果这层有人,peoples -> 当层所有人的数组集合
+                const peoples = queues[i]
+                // 有人下过电梯了，还有人上电梯的话，list就不推了
+                let hasLeft = false
+                // 每层都判断有没有人下电梯
+                if (lift.includes(i)) {
+                    hasLeft = true
+                    list.push(i)
+                }
+                getOutLift(i)
+                // 如果有人并且去同一个方向，电梯必须停靠
+                if (peoples.length !== 0) {
+                    if (hasLeft) {
+                        // do nothing
+                    } else {
+                        let stop = peoples.some(item => {
+                            return item > i
+                        })
+                        if (stop) {
+                            // 第一次的i=0不推，以后应该推
+                            if (uptime === 1) {
+                                if (i !== 0) {
+                                    list.push(i)
+                                }
+                            } else {
+                                if (bottomGetOut) {
+                                    if (i === bottomFloor) {
+
+                                    } else {
+                                        list.push(i)
+                                        bottomGetOut = false
+                                    }
+                                } else {
+                                    list.push(i)
+                                }
+                            }
+                        }
+                    }
+                    if (lift.length < capacity) {
+                        // 并且电梯没满就让他进电梯，进一个人就会判断一次电梯有没有满
+                        getInLift(queues, i)
+                    }
+                }
+
+                // 每到一层，判断该方向之后的楼层还有没有人 或者有没有人还要去之后的楼层
+                let flag = true
+                for (let j = i + 1; j < queues.length; j++) {
+                    if (queues[j].length !== 0 || lift.includes(j)) {
+                        flag = false
+                    }
+                }
+
+                console.log(i, 'floor')
+                console.log(list, 'list')
+                console.log(lift, 'lift')
+                topFloor = i
+                // 如果没人了
+                if (flag) {
+                    if (hasLeft) {
+                        // 最顶层下过人
+                        topGetOut = true
+                    }
+                    break
+                }
+            }
+            direction = 'down'
+            goDown()
+        }
+
+        function goDown() {
+            // lift start go down
+            for (let i = topFloor; i >= 0; i--) {
+                bottomFloor = i
+                // 如果这层有人,peoples -> 当层所有人的数组集合
+                const peoples = queues[i]
+                // 有人下过电梯了，还有人上电梯的话，list就不推了
+                let hasLeft = false
+                // 每层都判断有没有人下电梯
+                if (lift.includes(i)) {
+                    hasLeft = true
+                    list.push(i)
+                }
+                getOutLift(i)
+                // 如果有人去相同方向的，电梯必须停靠
+                if (peoples.length !== 0) {
+                    if (hasLeft) { // 如果已经有人下过车了，不用push
+                        // do nothing
+                    } else {
+                        let stop = peoples.some(item => {
+                            return item < i
+                        })
+                        if (stop) { // 有人去相同方向
+                            // topFloor在godown里面一定是确定好了的
+      
+                            // 如果最顶层有人下，又有人上，而这个上是放在下去的循环里面的，如果不判断顶层，就会多一次
+                            // 而如果顶层没人下，有人上，如果判断了顶层，又会少一次
+                            // 如果顶层有人下，没人上，到下一层楼时
+                            if (topGetOut) {
+                                if (i === topFloor) {
+
+                                } else {
+                                    list.push(i)
+                                    topGetOut = false
+                                }
+                            } else {
+                                list.push(i)
+                            }
+                        }
+                    }
+                    if (lift.length < capacity) {
+                        // 并且电梯没满就让他进电梯，进一个人就会判断一次电梯有没有满
+                        getInLift(queues, i)
+                    }
+                }
+
+                // 每到一层，判断该方向之后的楼层还有没有人 或者有没有人还要去之后的楼层
+                let flag = true
+                for (let j = i - 1; j >= 0; j--) {
+                    if (queues[j].length !== 0 || lift.includes(j)) {
+                        flag = false
+                    }
+                }
+
+                // 如果楼下没人了
+                if (flag) {
+                    // 如果楼上还有人
+                    let stillGoTop = false
+                    for (let i = 0; i < queues.length; i++) {
+                        if (queues[i].length !==0) {
+                            stillGoTop = true
+                        }
+                    }
+
+                    if (stillGoTop) {
+                        if (hasLeft) {
+                            // 最底层下过人
+                            bottomGetOut = true
+                        }
+                        direction = 'up'
+                        uptime += 1
+                        break
+                    } else {
+                        break
+                    }
+                }
+                console.log(i, 'floor')
+                console.log(list, 'list')
+                console.log(lift, 'lift')
+            }
+            if (direction === 'up') {
+                goUp()
+            } else {
+                // 如果不上去了，最后给电梯推个0，但是这种情况会在有人去0楼的时候，再推一次，所以判断
+                if (bottomFloor === 0) {
+
+                } else {
+                    list.push(0)
+                }
+                return
+            }
+        }
+        goUp()
+        console.log(list)
+        return list
+    }
+
+    var queues = [ [ 2 ],
+                [ 10, 5, 6, 4 ],
+                [ 11, 4, 3, 9 ],
+                [ 9, 5, 2, 4 ],
+                [ 11 ],
+                [ 3 ],
+                [ 7, 7 ],
+                [ 6 ],
+                [ 6 ],
+                [ 0, 7 ],
+                [ 9, 4, 4, 3 ],
+                [ 2, 1, 1 ] ]
+    theLift(queues, 1)
+
+</script>
+</body>
+</html>
