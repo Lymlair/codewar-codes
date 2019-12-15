@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+<script>
+    function knight(start, finish) {
+     let flag = false
+    function move(a,b) {
+        let arr = []
+        a - 2 > 0 && b - 1 > 0 ? arr.push(`${a - 2}, ${b - 1}`) : a
+        a - 1 > 0 && b - 2 > 0 ? arr.push(`${a - 1}, ${b - 2}`) : a
+        a - 2 > 0 && b + 1 > 0 ? arr.push(`${a - 2}, ${b + 1}`) : a
+        a - 1 > 0 && b + 2 > 0 ? arr.push(`${a - 1}, ${b + 2}`) : a
+        a + 2 > 0 && b - 1 > 0 ? arr.push(`${a + 2}, ${b - 1}`) : a
+        a + 1 > 0 && b - 2 > 0 ? arr.push(`${a + 1}, ${b - 2}`) : a
+        a + 1 < 9 && b + 2 < 9 ? arr.push(`${a + 1}, ${b + 2}`) : a
+        a + 2 < 9 && b + 1 < 9 ? arr.push(`${a + 2}, ${b + 1}`) : a
+        return arr
+    }
+
+  // Ha-ha, it's not "knight", it's a horse :D
+  const obj = {
+    a:1,
+    b:2,
+    c:3,
+    d:4,
+    e:5,
+    f:6,
+    g:7,
+    h:8
+  }
+
+  let counter = 0
+  const strArr = start.split('')
+  const finArr = finish.split('')
+  
+  strArr[0] = obj[`${strArr[0]}`]
+  finArr[0] = obj[`${finArr[0]}`]
+  strArr[1] = parseInt(strArr[1])
+  finArr[1] = parseInt(finArr[1])
+
+    // 第一阶段，收集8个位置
+    let result = []
+    var go = function(startArr) {
+        // 移动之后收集末位置
+        result = move(startArr[0], startArr[1])
+        judge()
+    }
+
+    var judge = function() {
+        counter++
+        if (result.includes(`${finArr[0]}, ${finArr[1]}`)) {
+            console.log('complete')
+            return
+        } else { // 如果没有
+            // 每个位置都再移动，先记录result
+            let backup = JSON.parse(JSON.stringify(result))
+            result = []
+            for (let i = 0; i < backup.length; i++) {
+                const position = backup[i]
+                const poArr = position.split(', ')
+                // console.log(poArr)
+                const a = poArr[0] = Number(poArr[0])
+                const b = poArr[1] = Number(poArr[1])
+                
+                // 移动每个位置
+                const po = move(a,b)
+                // 有所有第二阶段的末位置
+                result = result.concat(po)
+            }
+            judge()
+        }
+    }
+    go(strArr)
+    return counter
+}
+</script>
+</body>
+</html>
